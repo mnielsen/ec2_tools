@@ -18,7 +18,8 @@ Tools repository into a new directory named `ec2`
 
     git clone https://github.com/mnielsen/ec2_tools.git ec2
  
-Then add `ec2/*` to your `.gitignore` file, and commit:
+Then add `ec2/*` and `ec2.shelf` to your `.gitignore` file, and
+commit:
  
     git commit -am "Added ec2_tools"
 

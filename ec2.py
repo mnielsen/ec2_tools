@@ -2,11 +2,9 @@
 ec2.py
 ~~~~~~
 
-Simple EC2 cluster management with Python. Designed for easy
-integration with `fabric`.
-
-Mostly a convenience wrapper around the boto library.  
-
+Simple EC2 cluster management with Python, designed to make it easy to
+name an work with clusters, and to integrate with `fabric`.  For more
+information see README.md.
 """
 
 # Standard library
