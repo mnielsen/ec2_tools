@@ -342,7 +342,7 @@ if __name__ == "__main__":
         kill(args[1], int(args[2]))
     elif cmd=="add" and l==3:
         add(args[1], int(args[2]))
-    elif cmd=="ssh" and l==3:
-        cluster.ssh(args[1], int(args[2]), args[3])
+    elif cmd=="ssh" and l==4:
+        ssh(args[1], int(args[2]), args[3])
     else:
         print __doc__
