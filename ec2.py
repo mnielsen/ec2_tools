@@ -266,19 +266,31 @@ def add(cluster_name, n):
     clusters[cluster_name] = cluster
     clusters.close()
 
-def ssh(instances, cmd, background=False):
+def ssh(cluster_name, instance_index, cmd, background=False):
     """
-    Run ``cmd`` on the command line on ``instances``.  Runs in the
-    background if ``background == True``.
+    Run `cmd` on instance number `instance_index` on `cluster_name`.
+
+    Runs in the background if `background == True`.  This feature is
+    not currently exposed from the command line API, but may be useful
+    in future.
     """
+    if cluster_name not in clusters:
+        print "No cluster with the name %s exists.  Exiting." % cluster_name
+        sys.exit()
+    cluster = clusters[cluster_name]
+    instance = cluster.instances[instance_index]
+    try:
+        instance = cluster.instances[instance_index]
+    except IndexError:
+        print ("The instance index must be in the range 0 to %s. Exiting." %
+               len(cluster)-1)
+        sys.exit()
     keypair = "%s/%s.pem" % (os.environ["AWS_HOME"], os.environ["AWS_KEYPAIR"])
     append = {True: " &", False: ""}[background]
-    for instance in instances:
-        remote_cmd = "'nohup %s > foo.out 2> foo.err < /dev/null %s'" % (
-            cmd, append)
-        os.system(
-            "ssh -o BatchMode=yes -i %s ubuntu@%s %s" % (
-                keypair, instance.public_dns_name, remote_cmd))
+    remote_cmd = ("'nohup %s > foo.out 2> foo.err < /dev/null %s'" %
+                  (cmd, append))
+    os.system(("ssh -o BatchMode=yes -i %s ubuntu@%s %s" %
+               (keypair, instance.public_dns_name, remote_cmd))
 
 def scp(instances, local_filename, remote_filename=False):
     """
@@ -329,7 +341,7 @@ if __name__ == "__main__":
         kill(args[1], int(args[2]))
     elif cmd=="add" and l==3:
         add(args[1], int(args[2]))
-    elif cmd=="ssh" and (l==2 or l==3):
-        cluster.ssh(args[1:])
+    elif cmd=="ssh" and l==3:
+        cluster.ssh(args[1], int(args[2]), args[3])
     else:
         print __doc__
