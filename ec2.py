@@ -59,7 +59,7 @@ check_environment_variables_exist(
 # The keys in `clusters` are the `cluster_names`, and the values will
 # be Cluster objects, defined below, which represent named EC2
 # clusters.
-clusters = shelve.open("ec2.shelf", writeback=True)
+clusters = shelve.open("~/.ec2-shelf", writeback=True)
 
 class Cluster():
     """
