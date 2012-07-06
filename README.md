@@ -13,13 +13,13 @@ It's designed for my own use, and is very rough and very incomplete.
 Installation
 ------------
 
-EC2 Tools is designed to be used as a git submodule in other projects. 
+To install, from within your project's base directory, clone the EC2
+Tools repository into a new directory named `ec2`
 
-To install, from within your project's base directory, run the
-following shell commands.  
-
-    git submodule add git://github.com/mnielsen/ec2_tools.git ec2
-    git add .gitmodules
+    git clone https://github.com/mnielsen/ec2_tools.git ec2
+ 
+Then add `ec2` to your `.gitignore` file, and commit:
+ 
     git commit -am "Added ec2_tools submodule"
 
 To update
