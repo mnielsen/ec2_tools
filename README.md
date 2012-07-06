@@ -23,6 +23,9 @@ commit:
  
     git commit -am "Added ec2_tools"
 
+Edit `ec2/ec2.py` and change the value of `HOME` to point to your home
+directory.
+
 To update
 ---------
 

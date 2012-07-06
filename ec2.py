@@ -59,7 +59,8 @@ check_environment_variables_exist(
 # The keys in `clusters` are the `cluster_names`, and the values will
 # be Cluster objects, defined below, which represent named EC2
 # clusters.
-clusters = shelve.open("~/.ec2-shelf", writeback=True)
+HOME = "/home/mnielsen"
+clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
 
 class Cluster():
     """
@@ -290,7 +291,7 @@ def ssh(cluster_name, instance_index, cmd, background=False):
     remote_cmd = ("'nohup %s > foo.out 2> foo.err < /dev/null %s'" %
                   (cmd, append))
     os.system(("ssh -o BatchMode=yes -i %s ubuntu@%s %s" %
-               (keypair, instance.public_dns_name, remote_cmd))
+               (keypair, instance.public_dns_name, remote_cmd)))
 
 def scp(instances, local_filename, remote_filename=False):
     """
