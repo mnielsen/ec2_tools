@@ -63,8 +63,8 @@ check_environment_variables_exist(
 ec2_conn = EC2Connection(
     os.environ["AWS_ACCESS_KEY_ID"], os.environ["AWS_SECRET_ACCESS_KEY"])
 
-#### The following are the wrapper functions: create, show, show_all
-#### etc, which correspond to the command line API calls.
+#### The following are the functions corresponding to the command line
+#### API calls: create, show, show_all etc.
 
 def create(cluster_name, n, instance_type):
     """
@@ -88,17 +88,6 @@ def create(cluster_name, n, instance_type):
     clusters[cluster_name] = Cluster(cluster_name, instance_type, instances)
     clusters.close()
 
-def show_all():
-    """
-    Print the details of all clusters to stdout.
-    """
-    if len(clusters) == 0:
-        print "No clusters present."
-        sys.exit()
-    print "Showing all clusters."
-    for cluster_name in clusters:
-        show(cluster_name)
-
 def show(cluster_name):
     """
     Print the details of cluster `cluster_name` to stdout.
@@ -111,6 +100,17 @@ def show(cluster_name):
     for (j, instance) in enumerate(cluster.instances):
         print "{0:8}{1:13}{2:35}".format(
             str(j), instance.id, instance.public_dns_name)
+
+def show_all():
+    """
+    Print the details of all clusters to stdout.
+    """
+    if len(clusters) == 0:
+        print "No clusters present."
+        sys.exit()
+    print "Showing all clusters."
+    for cluster_name in clusters:
+        show(cluster_name)
 
 def shutdown(cluster_name):
     """
@@ -256,6 +256,35 @@ def start():
     subprocess.call(["fab", "first_deploy"])
     login(instance)
 
+#### Helper functions
+
+def get_cluster(cluster_name):
+    """
+    Check that a cluster with name `cluster_name` exists, and return
+    the corresponding Cluster object if so.
+    """
+    if cluster_name not in clusters:
+        print "No cluster with the name %s exists.  Exiting." % cluster_name
+        sys.exit()
+    return clusters[cluster_name]
+
+def create_ec2_instances(n, instance_type):
+    """
+    Create an EC2 cluster with `n` instances of type `instance_type`.
+    Return the corresponding boto `reservation.instances` object.
+    This code is used by both the `create` and `add` functions, which
+    is why it was factored out.
+    """
+    ami = AMIS[instance_type]
+    image = ec2_conn.get_all_images(image_ids=[ami])[0]
+    reservation = image.run(
+        n, n, os.environ["AWS_KEYPAIR"], instance_type=instance_type)
+    for instance in reservation.instances:  # Wait for the cluster to come up
+        while instance.update()== u'pending':
+            time.sleep(1)
+    time.sleep(120) # Give the ssh daemon time to start
+    return reservation.instances
+
 #### Cluster and Instance classes
 
 class Cluster():
@@ -289,43 +318,14 @@ class Instance():
         self.id = boto_instance.id
         self.public_dns_name = boto_instance.public_dns_name
 
-#### Helper functions
-
-def get_cluster(cluster_name):
-    """
-    Check that a cluster with name `cluster_name` exists, and return
-    the corresponding Cluster object if so.
-    """
-    if cluster_name not in clusters:
-        print "No cluster with the name %s exists.  Exiting." % cluster_name
-        sys.exit()
-    return clusters[cluster_name]
-
-def create_ec2_instances(n, instance_type):
-    """
-    Create an EC2 cluster with `n` instances of type `instance_type`.
-    Return the corresponding boto `reservation.instances` object.
-    This code is used by both the `create` and `add` functions, which
-    is why it was factored out.
-    """
-    ami = AMIS[instance_type]
-    image = ec2_conn.get_all_images(image_ids=[ami])[0]
-    reservation = image.run(
-        n, n, os.environ["AWS_KEYPAIR"], instance_type=instance_type)
-    for instance in reservation.instances:  # Wait for the cluster to come up
-        while instance.update()== u'pending':
-            time.sleep(1)
-    time.sleep(120) # Give the ssh daemon time to start
-    return reservation.instances
-
-#### Methods to export externally
+#### Method to export externally
 
 def public_dns_names(cluster_name):
     """
     Return a list containing the public dns names for `cluster_name`.
 
-    See the docstring for this module to see how this enables easy
-    integration with Fabric.
+    See README.md to see how this enables easy integration with
+    Fabric.
     """
     if cluster_name not in clusters:
         print ("Cluster name %s not recognized.  Exiting ec2.ec2_hosts()." %
@@ -346,10 +346,10 @@ if __name__ == "__main__":
         cmd = None
     if cmd=="create" and l==4:
         create(args[1], int(args[2]), args[3])
-    elif cmd=="show_all" and l==1:
-        show_all()
     elif cmd=="show" and l==2:
         show(args[1])
+    elif cmd=="show_all" and l==1:
+        show_all()
     elif cmd=="shutdown" and l==2:
         shutdown(args[1])
     elif cmd=="shutdown_all" and l==1:
