@@ -127,7 +127,7 @@ def shutdown(cluster_name):
     ec2_conn.terminate_instances(
         [instance.id for instance in clusters[cluster_name].instances])
     del clusters[cluster_name]
-    clusters.close()
+    clusters.sync()
 
 def shutdown_all():
     """
@@ -139,6 +139,7 @@ def shutdown_all():
         sys.exit()
     for cluster_name in clusters:
         shutdown(cluster_name)
+    clusters.close()
 
 def login(cluster_name, instance_index):
     """

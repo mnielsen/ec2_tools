@@ -1,61 +1,58 @@
 # Test suite for the ec2.py module
 
 echo -e "\nRunning test suite for the ec2.py module"
-echo -e "\nNote that test output needs to be inspected manually."
+echo "Note that test output needs to be inspected manually."
 
-echo -e "\nTest: 'show_all' reveals the state of all clusters"
+echo -e "\nTest: python ec2.py show_all"
 echo "Starting configuration of EC2:"
 python ec2.py show_all
 
-echo -e "\nTest: 'create' can be used to create a cluster"
+echo -e "\nTest: python ec2.py create alpha 2 m1.small"
 echo "Creating a cluster named alpha with 2 m1.small instances"
 python ec2.py create alpha 2 m1.small
-echo "Configuration:"
 python ec2.py show_all
 
 echo -e "\nTest: 'create' won't create duplicate clusters"
+echo "Code: python ec2.py create alpha 1 m1.small"
 echo "Trying to create another cluster named alpha (should fail):"
 python ec2.py create alpha 1 m1.small
 
-echo -e "\nTest: using 'create' to create a second cluster, beta"
+echo -e "\nTest: python ec2.py create beta 1 m1.large"
 echo "Creating a cluster named beta with 1 m1.large instance"
 python ec2.py create beta 1 m1.large
-echo "Configuration:"
 python ec2.py show_all
 
 echo -e "\nTest: 'create' won't create clusters with more than 20 instances"
+echo "Code: python ec2.py create gamma 27 m1.small"
 echo "Trying to create a cluster named gamma with 27 m1.small instances"
 python ec2.py create gamma 27 m1.small
 
-echo -e "\nTest: 'kill' to remove instance 0 from alpha cluster"
+echo -e "\nTest: python kill alpha 0"
 python ec2.py kill alpha 0
-echo "Configuration:"
 python ec2.py show_all
 
 echo -e "\nTest: 'kill' won't kill instances that aren't available"
+echo "python ec2.py kill alpha 1" 
 python ec2.py kill alpha 1
 
-echo -e "\nTest: Using 'add' to add two extra instances to a cluster"
+echo -e "\nTest: python ec2.py add alpha 2"
 python ec2.py add alpha 2
-echo "Configuration:"
 python ec2.py show_all
 
 echo -e "\nTest: 'add' won't work on clusters that don't exist"
+echo "Code: python ec2.py add gamma 1"
 python ec2.py add gamma 1
 
-echo -e "\nTest: 'shutdown' cluster alpha"
+echo -e "\nTest: python ec2.py shutdown alpha"
 pyton ec2.py shutdown alpha
-echo "Configuration:"
 python ec2.py show_all
 
-echo -e "\nTest: 'create' a new cluster gamma"
-pyton ec2.py create gamma 2 m1.small
-echo "Configuration:"
+echo -e "\nTest: python ec2.py create gamma 2 m1.small"
+python ec2.py create gamma 2 m1.small
 python ec2.py show_all
 
-echo -e "\nTest: 'shutdown_all' clusters"
+echo -e "\nTest: python ec2.py shutdown_all"
 python ec2.py shutdown_all
-echo "Configuration:"
 python ec2.py show_all
 
-echo -e "\nNot tested: login, ssh, ssh_all, scp, scp_all."
+echo -e "\nNot tested: show, shutdown, login, ssh, ssh_all, scp, scp_all."
