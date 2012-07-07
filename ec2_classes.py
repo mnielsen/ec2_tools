@@ -2,11 +2,17 @@
 ec2_classes.py
 ~~~~~~~~~~~~~~
 
-Defines the Cluster and Instance classes used by `ec2.py`.  These
-classes are put in a separate module because `ec2.py` stores instances
-of these classes by pickling (through shelves), and ...
-
+Defines the Cluster and Instance classes used by `ec2.py`.  
 """
+
+# Why are these classes stored in a separate module from ec2.py?
+#
+# These classes are put in a separate module because ec2.py stores
+# instances of these classes by pickling (through shelves).  Pickling
+# classes defined within ec2.py creates namespace problems that can be
+# solved by putting the class definitions into a separate module. See:
+#
+# http://stackoverflow.com/questions/3614379/attributeerror-when-unpickling-an-object
 
 #### Cluster and Instance classes
 
