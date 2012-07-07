@@ -78,7 +78,8 @@ def create(cluster_name, n, instance_type):
     """
     # Parameter check
     if cluster_name in clusters:
-        print "A cluster with name %s already exists.  Exiting."
+        print ("A cluster with name %s already exists.  Exiting." 
+               % cluster_name)
         sys.exit()
     if n < 1 or n > 20:
         print "Clusters must contain between 1 and 20 instances.  Exiting."
@@ -272,7 +273,7 @@ def get_instance(cluster, instance_index):
         return cluster.instances[instance_index]
     except IndexError:
         print ("The instance index must be in the range 0 to %s. Exiting." %
-               len(cluster)-1)
+               (len(cluster.instances)-1,))
         sys.exit()
 
 #### Cluster and Instance classes
