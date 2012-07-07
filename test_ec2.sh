@@ -1,10 +1,10 @@
 # Test suite for the ec2.py module
 
-echo -e "\nRunning test suite for the ec2.py module"
+echo -e "\nRunning test suite for the ec2.py module."
 echo "Note that test output needs to be inspected manually."
 
 echo -e "\nThis will shut down all running clusters, including clusters that"
-echo "you may have running other tasks.  Do you want to continue (y/n)?"
+echo "may be running other tasks.  Do you want to continue (y/n)?"
 read choice
 if [ $choice = "y" ]
 then
