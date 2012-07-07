@@ -44,7 +44,7 @@ echo "Code: python ec2.py add gamma 1"
 python ec2.py add gamma 1
 
 echo -e "\nTest: python ec2.py shutdown alpha"
-pyton ec2.py shutdown alpha
+python ec2.py shutdown alpha
 python ec2.py show_all
 
 echo -e "\nTest: python ec2.py create gamma 2 m1.small"
