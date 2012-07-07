@@ -3,8 +3,9 @@ ec2.py
 ~~~~~~
 
 Simple EC2 cluster management with Python, designed to make it easy to
-name an work with clusters, and to integrate with `fabric`.  For more
-information see README.md.
+name and work with clusters, and to integrate with `fabric`.  
+
+For usage information see README.md.
 """
 
 # Standard library
@@ -342,4 +343,5 @@ if __name__ == "__main__":
     elif cmd=="ssh" and l==4:
         ssh(args[1], int(args[2]), args[3])
     else:
-        print __doc__
+        print ("Command not recognized. "
+               "For usage information, see README.md.")
