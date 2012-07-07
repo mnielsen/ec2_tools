@@ -55,4 +55,9 @@ echo -e "\nTest: python ec2.py shutdown_all"
 python ec2.py shutdown_all
 python ec2.py show_all
 
+echo -e "\nTest: Using Amazon's EC2 tools to check that all instances really"
+echo "have shut down."
+echo "Code: ec2-describe-instances | grep running"
+ec2-describe-instances | grep running
+
 echo -e "\nNot tested: show, shutdown, login, ssh, ssh_all, scp, scp_all."
