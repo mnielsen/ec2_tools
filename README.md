@@ -77,6 +77,26 @@ cluster down entirely.
 Add `n` extra instances to CLUSTER_NAME.  Those instances are of the
 same instance type as the cluster as a whole.
 
+    python ec2.py ssh CLUSTER_NAME n cmd
+
+Run `cmd` on instance number `n` on CLUSTER_NAME.  Output from the
+command is directed to `foo.out` and `foo.err` on the instance.
+
+    python ec2.py ssh_all CLUSTER_NAME cmd
+
+As for `ssh`, but executed on all instances in CLUSTER_NAME, not just
+a single instance.
+
+    python ec2.py scp CLUSTER_NAME n local_filename [remote_filename]
+
+Copies `local_filename` to `remote_filename` on instance `n` on
+CLUSTER_NAME.  `remote_filename` defaults to `.`.
+
+    python ec2.py scp_all CLUSTER_NAME local_filename [remote_filename]
+
+As for `scp`, but executed on all instances in CLUSTER_NAME, not just
+a single instance.
+
 Integration with fabric
 -----------------------
 

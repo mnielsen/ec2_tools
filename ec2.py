@@ -235,7 +235,7 @@ def scp(cluster_name, instance_index, local_filename, remote_filename=False):
         sys.exit()
     keypair = "%s/%s.pem" % (os.environ["AWS_HOME"], os.environ["AWS_KEYPAIR"])
     if not remote_filename:
-        remote_filename = local_filename
+        remote_filename = "."
     os.system(("scp -r -i %s %s ubuntu@%s:%s" %
                (keypair, local_filename, 
                instance.public_dns_name, remote_filename)))
