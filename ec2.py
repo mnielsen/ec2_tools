@@ -164,7 +164,7 @@ def kill(cluster_name, instance_index):
         sys.exit()
     print ("Shutting down instance %s on cluster %s." % 
            (instance_index, cluster_name))
-    ec2_conn.terminate_instances(instance.id])
+    ec2_conn.terminate_instances([instance.id])
     del cluster.instances[instance_index]
     clusters[cluster_name] = cluster
     clusters.close()
