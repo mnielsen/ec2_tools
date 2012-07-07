@@ -20,6 +20,9 @@ import time
 # Third party libraries
 from boto.ec2.connection import EC2Connection
 
+# My libraries
+import ec2_classes
+
 #### Constants and globals
 
 # The list of EC2 AMIs to use, from alestic.com
@@ -40,8 +43,7 @@ AMIS = {"m1.small" : "ami-e2af508b",
 # state.
 #
 # The keys in `clusters` are the `cluster_names`, and the values will
-# be Cluster objects, defined below, which represent named EC2
-# clusters.
+# be ec2_classes.Cluster objects, which represent named EC2 clusters.
 HOME = "/home/mnielsen"
 clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
 
@@ -90,7 +92,8 @@ def create(cluster_name, n, instance_type):
     # Create the EC2 instances
     instances = create_ec2_instances(n, instance_type)
     # Update clusters
-    clusters[cluster_name] = Cluster(cluster_name, instance_type, instances)
+    clusters[cluster_name] = ec2_classes.Cluster(
+        cluster_name, instance_type, instances)
     clusters.close()
 
 def show(cluster_name):
@@ -268,7 +271,7 @@ def get_cluster(cluster_name):
 def get_instance(cluster, instance_index):
     """
     Check that `cluster` has an instance with index `instance_index`,
-    and if so return the corresponding Instance object.
+    and if so return the corresponding ec2_classes.Instance object.
     """
     try:
         return cluster.instances[instance_index]
@@ -276,39 +279,6 @@ def get_instance(cluster, instance_index):
         print ("The instance index must be in the range 0 to %s. Exiting." %
                (len(cluster.instances)-1,))
         sys.exit()
-
-#### Cluster and Instance classes
-
-class Cluster():
-    """
-    Cluster objects represent a named EC2 cluster.  This class does
-    relatively little, it exists mostly to encapsulate the data
-    structures used to represent clusters.
-    """
-
-    def __init__(self, cluster_name, instance_type, boto_instances):
-        self.cluster_name = cluster_name
-        self.instance_type = instance_type
-        self.instances = [Instance(boto_instance) 
-                          for boto_instance in boto_instances]
-
-    def add(self, boto_instances):
-        """
-        Add extra instances to the cluster.
-        """
-        self.instances.extend(
-            [Instance(boto_instance) for boto_instance in boto_instances])
-
-class Instance():
-    """
-    Instance objects represent EC2 instances in a Cluster object.  As
-    with Cluster, this class does relatively little, it exists mostly
-    to encapsulate the data structures used to represent instances.
-    """
-
-    def __init__(self, boto_instance):
-        self.id = boto_instance.id
-        self.public_dns_name = boto_instance.public_dns_name
 
 #### Method to export externally
 
