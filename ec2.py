@@ -212,6 +212,14 @@ def ssh(cluster_name, instance_index, cmd, background=False):
     os.system(("ssh -o BatchMode=yes -i %s ubuntu@%s %s" %
                (keypair, instance.public_dns_name, remote_cmd)))
 
+def ssh_all(cluster_name, cmd):
+    """
+    Run `cmd` on all instances in `cluster_name`.
+    """
+    cluster = get_cluster(cluster_name)
+    for j in range(len(cluster.instances)):
+        ssh(cluster_name, j, cmd)
+
 def scp(instances, local_filename, remote_filename=False):
     """
     scp ``local_filename`` to ``remote_filename`` on ``instances``.
@@ -342,6 +350,8 @@ if __name__ == "__main__":
         add(args[1], int(args[2]))
     elif cmd=="ssh" and l==4:
         ssh(args[1], int(args[2]), args[3])
+    elif cmd=="ssh_all" and l==3:
+        ssh_all(args[1], args[2])
     else:
         print ("Command not recognized. "
                "For usage information, see README.md.")
