@@ -116,9 +116,9 @@ into the fabfile.
 Testing
 -------
 
-Run:
+Change directory to `ec2`, and run:
 
-    bash ec2/test_ec2.sh > ec2/test.out
+    bash test_ec2.sh
 
 Note that the test results must be manually inspected to determine if
 they are executing correctly.
