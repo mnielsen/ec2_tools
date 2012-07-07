@@ -29,6 +29,17 @@ AMIS = {"m1.small" : "ami-e2af508b",
         "cc1.4xlarge" : "ami-1cad5275"
         }
 
+# The global variable `clusters` defined below is a persistent shelf
+# which is used to represent all the clusters.  Note that it's
+# naturally a global object because it represents a global external
+# state.
+#
+# The keys in `clusters` are the `cluster_names`, and the values will
+# be Cluster objects, defined below, which represent named EC2
+# clusters.
+HOME = "/home/mnielsen"
+clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
+
 #### Check that required the environment variables exist
 def check_environment_variables_exist(*args):
     """
@@ -45,73 +56,14 @@ def check_environment_variables_exist(*args):
         sys.exit()
 
 check_environment_variables_exist(
-    "AWS_HOME", 
-    "AWS_KEYPAIR",
-    "AWS_ACCESS_KEY_ID", 
-    "AWS_SECRET_ACCESS_KEY")
+    "AWS_HOME", "AWS_KEYPAIR", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
 
+# EC2 connection object
+ec2_conn = EC2Connection(
+    os.environ["AWS_ACCESS_KEY_ID"], os.environ["AWS_SECRET_ACCESS_KEY"])
 
-# The global variable `clusters` defined below is a persistent shelf
-# which is used to represent all the clusters.  Note that it's
-# naturally a global object because it represents a global external
-# state.
-#
-# The keys in `clusters` are the `cluster_names`, and the values will
-# be Cluster objects, defined below, which represent named EC2
-# clusters.
-HOME = "/home/mnielsen"
-clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
-
-class Cluster():
-    """
-    Cluster objects represent a named EC2 cluster.  This class does
-    relatively little, it exists mostly to encapsulate the data
-    structures used to represent clusters.
-    """
-
-    def __init__(self, cluster_name, instance_type, boto_instances):
-        self.cluster_name = cluster_name
-        self.instance_type = instance_type
-        self.instances = [Instance(boto_instance) 
-                          for boto_instance in boto_instances]
-
-    def add(self, boto_instances):
-        """
-        Add extra instances to the cluster.
-        """
-        self.instances.extend([Instance(boto_instance) 
-                               for boto_instance in boto_instances])
-
-class Instance():
-    """
-    Instance objects represent EC2 instances in a Cluster object.  As
-    with Cluster, this class does relatively little, it exists mostly
-    to encapsulate the data structures used to represent instances.
-    """
-
-    def __init__(self, boto_instance):
-        self.id = boto_instance.id
-        self.public_dns_name = boto_instance.public_dns_name
-
-
-
-ec2_conn = EC2Connection(os.environ["AWS_ACCESS_KEY_ID"], 
-                         os.environ["AWS_SECRET_ACCESS_KEY"])
-
-def public_dns_names(cluster_name):
-    """
-    Return a list containing the public dns names for `cluster_name`.
-
-    See the docstring for this module to see how this enables easy
-    integration with Fabric.
-    """
-    if cluster_name not in clusters:
-        print ("Cluster name %s not recognized.  Exiting ec2.ec2_hosts()." %
-               cluster_name)
-        sys.exit()
-    else:
-        cluster = clusters[cluster_name]
-        return [instance.public_dns_name for instance in cluster.instances]
+#### The following are the wrapper functions: create, show, show_all
+#### etc, which correspond to the command line API calls.
 
 def create(cluster_name, n, instance_type):
     """
@@ -135,23 +87,6 @@ def create(cluster_name, n, instance_type):
     clusters[cluster_name] = Cluster(cluster_name, instance_type, instances)
     clusters.close()
 
-def create_ec2_instances(n, instance_type):
-    """
-    Create an EC2 cluster with `n` instances of type `instance_type`.
-    Return the corresponding boto `reservation.instances` object.
-    This code is used by both the `create` and `add` functions, which
-    is why it was factored out.
-    """
-    ami = AMIS[instance_type]
-    image = ec2_conn.get_all_images(image_ids=[ami])[0]
-    reservation = image.run(
-        n, n, os.environ["AWS_KEYPAIR"], instance_type=instance_type)
-    for instance in reservation.instances:  # Wait for the cluster to come up
-        while instance.update()== u'pending':
-            time.sleep(1)
-    time.sleep(120) # Give the ssh daemon time to start
-    return reservation.instances
-
 def show_all():
     """
     Print the details of all clusters to stdout.
@@ -167,10 +102,7 @@ def show(cluster_name):
     """
     Print the details of cluster `cluster_name` to stdout.
     """
-    if cluster_name not in clusters:
-        print "No cluster with the name %s exists.  Exiting." % cluster_name
-        sys.exit()
-    cluster = clusters[cluster_name]
+    cluster = get_cluster(cluster_name)
     print "Displaying instances from cluster: %s" % cluster_name
     print "Instances of type: %s" % cluster.instance_type
     print "{0:8}{1:13}{2:35}".format(
@@ -184,9 +116,7 @@ def shutdown(cluster_name):
     Shutdown all EC2 instances in `cluster_name`, and remove
     `cluster_name` from ` the `clusters` shelf.
     """
-    if cluster_name not in clusters:
-        print "No cluster with the name %s exists.  Exiting." % cluster_name
-        sys.exit()
+    cluster = get_cluster(cluster_name)
     print "Shutting down cluster %s." % cluster_name
     ec2_conn.terminate_instances(
         [instance.id for instance in clusters[cluster_name].instances])
@@ -208,10 +138,7 @@ def login(cluster_name, instance_index):
     """
     ssh to `instance_index` in `cluster_name`.
     """
-    if cluster_name not in clusters:
-        print "No cluster with the name %s exists.  Exiting." % cluster_name
-        sys.exit()
-    cluster = clusters[cluster_name]
+    cluster = get_cluster(cluster_name)
     try:
         instance = cluster.instances[instance_index]
     except IndexError:
@@ -229,10 +156,7 @@ def kill(cluster_name, instance_index):
     machine in the cluster then it runs `shutdown(cluster_name)`
     instead.
     """
-    if cluster_name not in clusters:
-        print "No cluster with the name %s exists.  Exiting." % cluster_name
-        sys.exit()
-    cluster = clusters[cluster_name]
+    cluster = get_cluster(cluster_name)
     if instance_index < 0 or instance_index >= len(cluster.instances):
         print ("The instance index must be between 0 and %s.  Exiting." %
                (len(cluster.instances)-1,))
@@ -253,10 +177,7 @@ def add(cluster_name, n):
     Add `n` instances to `cluster_name`, of the same instance type as
     the other instances already in the cluster.
     """
-    if cluster_name not in clusters:
-        print "No cluster with the name %s exists.  Exiting." % cluster_name
-        sys.exit()
-    cluster = clusters[cluster_name]
+    cluster = get_cluster(cluster_name)
     if n < 1:
         print "Must be adding at least 1 instance to the cluster.  Exiting."
         sys.exit()
@@ -275,10 +196,7 @@ def ssh(cluster_name, instance_index, cmd, background=False):
     not currently exposed from the command line API, but may be useful
     in future.
     """
-    if cluster_name not in clusters:
-        print "No cluster with the name %s exists.  Exiting." % cluster_name
-        sys.exit()
-    cluster = clusters[cluster_name]
+    cluster = get_cluster(cluster_name)
     instance = cluster.instances[instance_index]
     try:
         instance = cluster.instances[instance_index]
@@ -314,6 +232,85 @@ def start():
     instance = create_ec2_instance("m1.small")
     subprocess.call(["fab", "first_deploy"])
     login(instance)
+
+#### Cluster and Instance classes
+
+class Cluster():
+    """
+    Cluster objects represent a named EC2 cluster.  This class does
+    relatively little, it exists mostly to encapsulate the data
+    structures used to represent clusters.
+    """
+
+    def __init__(self, cluster_name, instance_type, boto_instances):
+        self.cluster_name = cluster_name
+        self.instance_type = instance_type
+        self.instances = [Instance(boto_instance) 
+                          for boto_instance in boto_instances]
+
+    def add(self, boto_instances):
+        """
+        Add extra instances to the cluster.
+        """
+        self.instances.extend(
+            [Instance(boto_instance) for boto_instance in boto_instances])
+
+class Instance():
+    """
+    Instance objects represent EC2 instances in a Cluster object.  As
+    with Cluster, this class does relatively little, it exists mostly
+    to encapsulate the data structures used to represent instances.
+    """
+
+    def __init__(self, boto_instance):
+        self.id = boto_instance.id
+        self.public_dns_name = boto_instance.public_dns_name
+
+#### Helper functions
+
+def get_cluster(cluster_name):
+    """
+    Check that a cluster with name `cluster_name` exists, and return
+    the corresponding Cluster object if so.
+    """
+    if cluster_name not in clusters:
+        print "No cluster with the name %s exists.  Exiting." % cluster_name
+        sys.exit()
+    return clusters[cluster_name]
+
+def create_ec2_instances(n, instance_type):
+    """
+    Create an EC2 cluster with `n` instances of type `instance_type`.
+    Return the corresponding boto `reservation.instances` object.
+    This code is used by both the `create` and `add` functions, which
+    is why it was factored out.
+    """
+    ami = AMIS[instance_type]
+    image = ec2_conn.get_all_images(image_ids=[ami])[0]
+    reservation = image.run(
+        n, n, os.environ["AWS_KEYPAIR"], instance_type=instance_type)
+    for instance in reservation.instances:  # Wait for the cluster to come up
+        while instance.update()== u'pending':
+            time.sleep(1)
+    time.sleep(120) # Give the ssh daemon time to start
+    return reservation.instances
+
+#### Methods to export externally
+
+def public_dns_names(cluster_name):
+    """
+    Return a list containing the public dns names for `cluster_name`.
+
+    See the docstring for this module to see how this enables easy
+    integration with Fabric.
+    """
+    if cluster_name not in clusters:
+        print ("Cluster name %s not recognized.  Exiting ec2.ec2_hosts()." %
+               cluster_name)
+        sys.exit()
+    else:
+        cluster = clusters[cluster_name]
+        return [instance.public_dns_name for instance in cluster.instances]
 
 #### External interface
 
