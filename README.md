@@ -106,8 +106,8 @@ Integration with fabric
 
 The function `ec2.public_dns_names(cluster_name)` is designed to make
 integration with `fabric` easy.  In particular, we can tell `fabric`
-about the cluster by importing `ec2` in our fabfile, and then putting
-the line:
+about the cluster by running `import ec2.ec2 as ec2` in our fabfile,
+and then putting the line:
 
     env.hosts = ec2.public_dns_names(CLUSTER_NAME)
 

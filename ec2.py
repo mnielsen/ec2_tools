@@ -180,13 +180,6 @@ def add(cluster_name, n):
     if n < 1:
         print "Must be adding at least 1 instance to the cluster.  Exiting."
         sys.exit()
-    if n > 20-num_instances():
-        print "You currently have %s instances." % num_instances()
-        print "You may not have more than 20 instances running at once."
-        print ("Adding %s more instances will exceed the 20-instance limit." 
-               % n)
-        print "Exiting."
-        sys.exit()
     # Create the EC2 instances
     instances = create_ec2_instances(n, cluster.instance_type)
     # Update clusters
@@ -283,12 +276,6 @@ def get_instance(cluster, instance_index):
         print ("The instance index must be in the range 0 to %s. Exiting." %
                (len(cluster.instances)-1,))
         sys.exit()
-
-def num_instances():
-    """
-    Return the total number of instances across all clusters.
-    """
-    return sum([len(cluster.instances) for cluster in clusters.values()])
 
 #### Cluster and Instance classes
 
