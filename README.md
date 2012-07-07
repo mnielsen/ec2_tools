@@ -8,7 +8,11 @@ useful features:
 + Makes it easy to create and work with named clusters.
 + Easily integrated with `fabric`.
 
-It's designed for my own use, and is very rough and incomplete.
+I wrote it for my own use, and it's both rough and _very_ incomplete.
+The goal was to make it easier for me to test code out on EC2.  It's
+not even close to providing the control you need for deploying real
+applications to EC2 --- it doesn't handle things like security groups,
+control over ports, and so on.
 
 Installation
 ------------
@@ -18,8 +22,7 @@ Tools repository into a new directory named `ec2`
 
     git clone https://github.com/mnielsen/ec2_tools.git ec2
  
-Then add `ec2/*` and `ec2.shelf` to your `.gitignore` file, and
-commit:
+Then add `ec2/*` to your `.gitignore` file, and commit:
  
     git commit -am "Added ec2_tools"
 
@@ -42,7 +45,8 @@ Usage from the command line
 Create a cluster with name `CLUSTER_NAME`, containing `n` machines of
 type `type`.  The allowed types are `m1.small`, `c1.medium`,
 `m1.large`, `m1.xlarge`, `m2.xlarge`, `m2.2xlarge`, `m2.4xlarge`,
-`c1.xlarge`, `cc1.4xlarge`.
+`c1.xlarge`, `cc1.4xlarge`.  The resulting instances are basic Ubuntu
+machine images provided by alestic.com.
 
     python ec2.py show CLUSTER_NAME
 
@@ -108,3 +112,13 @@ the line:
     env.hosts = ec2.public_dns_names(CLUSTER_NAME)
 
 into the fabfile.
+
+Testing
+-------
+
+Run:
+
+    bash ec2/test_ec2.sh > ec2/test.out
+
+Note that the test results must be manually inspected to determine if
+they are executing correctly.
