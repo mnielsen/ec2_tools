@@ -295,6 +295,7 @@ def public_dns_names(cluster_name):
         sys.exit()
     else:
         cluster = clusters[cluster_name]
+        clusters.close()
         return [instance.public_dns_name for instance in cluster.instances]
 
 #### External interface
