@@ -240,6 +240,14 @@ def scp(cluster_name, instance_index, local_filename, remote_filename=False):
                (keypair, local_filename, 
                instance.public_dns_name, remote_filename)))
 
+def scp_all(cluster_name, local_filename, remote_filename=False):
+    """
+    Run `scp` on all instances in `cluster_name`.
+    """
+    cluster = get_cluster(cluster_name)
+    for j in range(len(cluster.instances)):
+        scp(cluster_name, j, local_filename, remote_filename)
+
 def start():
     """
     Create an EC2 instance, set it up, and login.
@@ -362,6 +370,10 @@ if __name__ == "__main__":
         scp(args[1], int(args[2]), args[3])
     elif cmd=="scp" and l==5:
         scp(args[1], int(args[2]), args[3], args[4])
+    elif cmd=="scp_all" and l==3:
+        scp_all(args[1], args[2])
+    elif cmd=="scp_all" and l==4:
+        scp_all(args[1], args[2], args[3])
     else:
         print ("Command not recognized. "
                "For usage information, see README.md.")
