@@ -8,6 +8,8 @@ name and work with clusters, and to integrate with `fabric`.
 For usage information see README.md.
 """
 
+#### Library imports
+
 # Standard library
 import os
 import shelve
@@ -17,6 +19,8 @@ import time
 
 # Third party libraries
 from boto.ec2.connection import EC2Connection
+
+#### Constants and globals
 
 # The list of EC2 AMIs to use, from alestic.com
 AMIS = {"m1.small" : "ami-e2af508b",
@@ -41,7 +45,7 @@ AMIS = {"m1.small" : "ami-e2af508b",
 HOME = "/home/mnielsen"
 clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
 
-#### Check that required the environment variables exist
+# Check that the required environment variables exist
 def check_environment_variables_exist(*args):
     """
     Check that the environment variables in `*args` have all been
@@ -140,12 +144,7 @@ def login(cluster_name, instance_index):
     ssh to `instance_index` in `cluster_name`.
     """
     cluster = get_cluster(cluster_name)
-    try:
-        instance = cluster.instances[instance_index]
-    except IndexError:
-        print ("The instance index must be in the range 0 to %s. Exiting." %
-               len(cluster)-1)
-        sys.exit()
+    instance = get_instance(cluster, instance_index)
     print "SSHing to instance with address %s" % (instance.public_dns_name)
     keypair = "%s/%s.pem" % (os.environ["AWS_HOME"], os.environ["AWS_KEYPAIR"])
     os.system("ssh -i %s ubuntu@%s" % (keypair, instance.public_dns_name))
@@ -158,17 +157,14 @@ def kill(cluster_name, instance_index):
     instead.
     """
     cluster = get_cluster(cluster_name)
-    if instance_index < 0 or instance_index >= len(cluster.instances):
-        print ("The instance index must be between 0 and %s.  Exiting." %
-               (len(cluster.instances)-1,))
-        sys.exit()
+    instance = get_instance(cluster, instance_index)
     if len(cluster.instances)==1:
         print "Last machine in cluster, shutting down entire cluster."
         shutdown(cluster_name)
         sys.exit()
     print ("Shutting down instance %s on cluster %s." % 
            (instance_index, cluster_name))
-    ec2_conn.terminate_instances([cluster.instances[instance_index].id])
+    ec2_conn.terminate_instances(instance.id])
     del cluster.instances[instance_index]
     clusters[cluster_name] = cluster
     clusters.close()
@@ -198,12 +194,7 @@ def ssh(cluster_name, instance_index, cmd, background=False):
     in future.
     """
     cluster = get_cluster(cluster_name)
-    try:
-        instance = cluster.instances[instance_index]
-    except IndexError:
-        print ("The instance index must be in the range 0 to %s. Exiting." %
-               len(cluster)-1)
-        sys.exit()
+    instance = get_instance(cluster, instance_index)
     keypair = "%s/%s.pem" % (os.environ["AWS_HOME"], os.environ["AWS_KEYPAIR"])
     append = {True: " &", False: ""}[background]
     remote_cmd = ("'nohup %s > foo.out 2> foo.err < /dev/null %s'" %
@@ -227,12 +218,7 @@ def scp(cluster_name, instance_index, local_filename, remote_filename=False):
     `local_filename`.
     """
     cluster = get_cluster(cluster_name)
-    try:
-        instance = cluster.instances[instance_index]
-    except IndexError:
-        print ("The instance index must be in the range 0 to %s. Exiting." %
-               len(cluster)-1)
-        sys.exit()
+    instance = get_instance(cluster, instance_index)
     keypair = "%s/%s.pem" % (os.environ["AWS_HOME"], os.environ["AWS_KEYPAIR"])
     if not remote_filename:
         remote_filename = "."
@@ -267,6 +253,18 @@ def get_cluster(cluster_name):
         print "No cluster with the name %s exists.  Exiting." % cluster_name
         sys.exit()
     return clusters[cluster_name]
+
+def get_instance(cluster, instance_index):
+    """
+    Check that `cluster` has an instance with index `instance_index`,
+    and if so return the corresponding Instance object.
+    """
+    try:
+        return cluster.instances[instance_index]
+    except IndexError:
+        print ("The instance index must be in the range 0 to %s. Exiting." %
+               len(cluster)-1)
+        sys.exit()
 
 def create_ec2_instances(n, instance_type):
     """
