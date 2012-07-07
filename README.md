@@ -29,6 +29,12 @@ Then add `ec2/*` to your `.gitignore` file, and commit:
 Edit `ec2/ec2.py` and change the value of `HOME` to point to your home
 directory.
 
+For the `fabric` integration to work you must add the directory `ec2`
+to the $PYTHONPATH environment variable.  You must add the full path,
+e.g. add the following to your .bashrc:
+
+    export PYTHONPATH=/home/mnielsen/project/ec2/:$PYTHONPATH
+
 To update
 ---------
 
@@ -109,7 +115,7 @@ integration with `fabric` easy.  In particular, we can tell `fabric`
 about the cluster by running `import ec2.ec2 as ec2` in our fabfile,
 and then putting the line:
 
-    env.hosts = ec2.public_dns_names(CLUSTER_NAME)
+    env.hosts = ec2.public_dns_names("CLUSTER_NAME")
 
 into the fabfile.
 
