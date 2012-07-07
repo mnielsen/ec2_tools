@@ -3,6 +3,17 @@
 echo -e "\nRunning test suite for the ec2.py module"
 echo "Note that test output needs to be inspected manually."
 
+echo -e "\nThis will shut down all running clusters, including clusters that"
+echo "you may have running other tasks.  Do you want to continue (y/n)?"
+read choice
+if [ $choice = "y" ]
+then
+echo "Ok, continuing."
+else
+echo "Okay, quitting"
+exit 0
+fi
+
 echo -e "\nTest: python ec2.py show_all"
 echo "Starting configuration of EC2:"
 python ec2.py show_all
