@@ -234,14 +234,6 @@ def scp_all(cluster_name, local_filename, remote_filename=False):
     for j in range(len(cluster.instances)):
         scp(cluster_name, j, local_filename, remote_filename)
 
-def start():
-    """
-    Create an EC2 instance, set it up, and login.
-    """
-    instance = create_ec2_instance("m1.small")
-    subprocess.call(["fab", "first_deploy"])
-    login(instance)
-
 #### Helper functions
 
 def create_ec2_instances(n, instance_type):
