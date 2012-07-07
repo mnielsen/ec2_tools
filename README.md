@@ -108,13 +108,3 @@ the line:
     env.hosts = ec2.public_dns_names(CLUSTER_NAME)
 
 into the fabfile.
-
-Future expansion
-----------------
-
-To export an additional method:
-
-    ec2.boto_object(CLUSTER_NAME, index=0)
-
-Returns the boto object for the instance represented by CLUSTER_NAME
-and index.
