@@ -244,6 +244,23 @@ def start():
 
 #### Helper functions
 
+def create_ec2_instances(n, instance_type):
+    """
+    Create an EC2 cluster with `n` instances of type `instance_type`.
+    Return the corresponding boto `reservation.instances` object.
+    This code is used by both the `create` and `add` functions, which
+    is why it was factored out.
+    """
+    ami = AMIS[instance_type]
+    image = ec2_conn.get_all_images(image_ids=[ami])[0]
+    reservation = image.run(
+        n, n, os.environ["AWS_KEYPAIR"], instance_type=instance_type)
+    for instance in reservation.instances:  # Wait for the cluster to come up
+        while instance.update()== u'pending':
+            time.sleep(1)
+    time.sleep(120) # Give the ssh daemon time to start
+    return reservation.instances
+
 def get_cluster(cluster_name):
     """
     Check that a cluster with name `cluster_name` exists, and return
@@ -265,23 +282,6 @@ def get_instance(cluster, instance_index):
         print ("The instance index must be in the range 0 to %s. Exiting." %
                len(cluster)-1)
         sys.exit()
-
-def create_ec2_instances(n, instance_type):
-    """
-    Create an EC2 cluster with `n` instances of type `instance_type`.
-    Return the corresponding boto `reservation.instances` object.
-    This code is used by both the `create` and `add` functions, which
-    is why it was factored out.
-    """
-    ami = AMIS[instance_type]
-    image = ec2_conn.get_all_images(image_ids=[ami])[0]
-    reservation = image.run(
-        n, n, os.environ["AWS_KEYPAIR"], instance_type=instance_type)
-    for instance in reservation.instances:  # Wait for the cluster to come up
-        while instance.update()== u'pending':
-            time.sleep(1)
-    time.sleep(120) # Give the ssh daemon time to start
-    return reservation.instances
 
 #### Cluster and Instance classes
 
