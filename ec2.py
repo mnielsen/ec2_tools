@@ -22,9 +22,9 @@ from boto.ec2.connection import EC2Connection
 
 # My libraries
 try:
-    import ec2.ec2_classes as ec2_classes
-except ImportError:
     import ec2_classes
+except ImportError:
+    import ec2.ec2_classes as ec2_classes
 
 #### Constants and globals
 
