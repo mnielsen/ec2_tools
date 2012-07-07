@@ -198,7 +198,6 @@ def ssh(cluster_name, instance_index, cmd, background=False):
     in future.
     """
     cluster = get_cluster(cluster_name)
-    instance = cluster.instances[instance_index]
     try:
         instance = cluster.instances[instance_index]
     except IndexError:
@@ -220,19 +219,26 @@ def ssh_all(cluster_name, cmd):
     for j in range(len(cluster.instances)):
         ssh(cluster_name, j, cmd)
 
-def scp(instances, local_filename, remote_filename=False):
+def scp(cluster_name, instance_index, local_filename, remote_filename=False):
     """
-    scp ``local_filename`` to ``remote_filename`` on ``instances``.
-    If ``remote_filename`` is not set or is set to ``False`` then
-    ``remote_filename`` is set to ``local_filename``.
+    scp `local_filename` to `remote_filename` on instance
+    `instance_index` on cluster `cluster_name`.  If `remote_filename`
+    is not set or is set to `False` then `remote_filename` is set to
+    `local_filename`.
     """
+    cluster = get_cluster(cluster_name)
+    try:
+        instance = cluster.instances[instance_index]
+    except IndexError:
+        print ("The instance index must be in the range 0 to %s. Exiting." %
+               len(cluster)-1)
+        sys.exit()
     keypair = "%s/%s.pem" % (os.environ["AWS_HOME"], os.environ["AWS_KEYPAIR"])
     if not remote_filename:
         remote_filename = local_filename
-    for instance in instances:
-        os.system("scp -r -i %s %s ubuntu@%s:%s" % (
-                keypair, local_filename, 
-                instance.public_dns_name, remote_filename))
+    os.system(("scp -r -i %s %s ubuntu@%s:%s" %
+               (keypair, local_filename, 
+               instance.public_dns_name, remote_filename)))
 
 def start():
     """
@@ -352,6 +358,10 @@ if __name__ == "__main__":
         ssh(args[1], int(args[2]), args[3])
     elif cmd=="ssh_all" and l==3:
         ssh_all(args[1], args[2])
+    elif cmd=="scp" and l==4:
+        scp(args[1], int(args[2]), args[3])
+    elif cmd=="scp" and l==5:
+        scp(args[1], int(args[2]), args[3], args[4])
     else:
         print ("Command not recognized. "
                "For usage information, see README.md.")
