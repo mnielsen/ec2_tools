@@ -107,6 +107,23 @@ CLUSTER_NAME.  `remote_filename` defaults to `.`.
 As for `scp`, but executed on all instances in CLUSTER_NAME, not just
 a single instance.
 
+Externally exported methods
+---------------------------
+
+    ec2.exists(CLUSTER_NAME)
+
+Return ``True`` or ``False`` depending on whether a cluster named
+``CLUSTER_NAME`` exists.
+
+    ec2.public_dns_names(CLUSTER_NAMES)
+    
+Return a list of public dns names for the the cluster
+``CLUSTER_NAME``.
+
+    ec2.size(CLUSTER_NAME)
+
+Return the size of the cluster ``CLUSTER_NAME``.
+
 Integration with fabric
 -----------------------
 

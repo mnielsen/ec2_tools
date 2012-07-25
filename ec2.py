@@ -120,13 +120,6 @@ def show_all():
     for cluster_name in clusters:
         show(cluster_name)
 
-def exists(cluster_name):
-    """
-    Return `True` if an EC2 cluster with name `cluster_name` exists, and
-    `False` otherwise.
-    """
-    return (cluster_name in clusters)
-
 def shutdown(cluster_name):
     """
     Shutdown all EC2 instances in `cluster_name`, and remove
@@ -270,7 +263,7 @@ def get_cluster(cluster_name):
     Check that a cluster with name `cluster_name` exists, and return
     the corresponding Cluster object if so.
     """
-    if cluster_name not in clusters:
+    if cluter_name not in clusters:
         print "No cluster with the name %s exists.  Exiting." % cluster_name
         sys.exit()
     return clusters[cluster_name]
@@ -287,7 +280,14 @@ def get_instance(cluster, instance_index):
                (len(cluster.instances)-1,))
         sys.exit()
 
-#### Method to export externally
+#### Methods to export externally
+
+def exists(cluster_name):
+    """
+    Return ``True`` if an EC2 cluster with name ``cluster_name`` exists, and
+    ``False`` otherwise.
+    """
+    return (cluster_name in clusters)
 
 def public_dns_names(cluster_name):
     """
@@ -297,13 +297,19 @@ def public_dns_names(cluster_name):
     Fabric.
     """
     if cluster_name not in clusters:
-        print ("Cluster name %s not recognized.  Exiting ec2.ec2_hosts()." %
+        print ("Cluster name %s not recognized.  Exiting ec2.public_dns_names()." %
                cluster_name)
         sys.exit()
     else:
         cluster = clusters[cluster_name]
         clusters.close()
         return [instance.public_dns_name for instance in cluster.instances]
+
+def size(cluster_name):
+    """
+    Return the size of the cluster with name ``cluster_name``.
+    """
+    return len(get_cluster(cluster_name))
 
 #### External interface
 
