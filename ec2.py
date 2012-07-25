@@ -120,6 +120,13 @@ def show_all():
     for cluster_name in clusters:
         show(cluster_name)
 
+def exists(cluster_name):
+    """
+    Return `True` if an EC2 cluster with name `cluster_name` exists, and
+    `False` otherwise.
+    """
+    return (cluster_name in clusters)
+
 def shutdown(cluster_name):
     """
     Shutdown all EC2 instances in `cluster_name`, and remove
