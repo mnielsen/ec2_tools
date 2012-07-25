@@ -79,7 +79,7 @@ def create(cluster_name, n, instance_type):
     description of the new cluster.
     """
     # Parameter check
-    if cluster_name in clusters:
+    if exists(cluster_name):
         print ("A cluster with name %s already exists.  Exiting." 
                % cluster_name)
         sys.exit()
