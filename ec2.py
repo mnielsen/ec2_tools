@@ -37,15 +37,13 @@ AMIS = {"m1.small" : "ami-e2af508b",
         "cc1.4xlarge" : "ami-1cad5275"
         }
 
-# The global variable `clusters` defined below is a persistent shelf
-# which is used to represent all the clusters.  Note that it's
-# naturally a global object because it represents a global external
-# state.
+# The most important data structure we use is a persistent shelf which
+# is used to represent all the clusters.  The keys in this shelf are
+# the `cluster_names`, and the values will be ec2_classes.Cluster
+# objects, which represent named EC2 clusters.
 #
-# The keys in `clusters` are the `cluster_names`, and the values will
-# be ec2_classes.Cluster objects, which represent named EC2 clusters.
+# The shelf will be stored at "HOME/.ec2-shelf"
 HOME = "/home/mnielsen"
-clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
 
 # Check that the required environment variables exist
 def check_environment_variables_exist(*args):
@@ -86,6 +84,7 @@ def create(cluster_name, n, instance_type):
     if n < 1 or n > 20:
         print "Clusters must contain between 1 and 20 instances.  Exiting."
         sys.exit()
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     if not instance_type in AMIS:
         print "Instance type not recognized, setting it to be 'm1.small'."
         instance_type = "m1.small"
@@ -113,32 +112,41 @@ def show_all():
     """
     Print the details of all clusters to stdout.
     """
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     if len(clusters) == 0:
         print "No clusters present."
+        clusters.close()
         sys.exit()
     print "Showing all clusters."
     for cluster_name in clusters:
         show(cluster_name)
+    clusters.closer()
 
 def shutdown(cluster_name):
     """
-    Shutdown all EC2 instances in `cluster_name`, and remove
-    `cluster_name` from ` the `clusters` shelf.
+    Shutdown all EC2 instances in ``cluster_name``, and remove
+    ``cluster_name`` from the shelf of clusters.
     """
-    cluster = get_cluster(cluster_name)
+    if not exists(cluster_name):
+        print "No cluster with that name."
+        sys.exit()
     print "Shutting down cluster %s." % cluster_name
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     ec2_conn.terminate_instances(
         [instance.id for instance in clusters[cluster_name].instances])
     del clusters[cluster_name]
     clusters.sync()
+    clusters.close()
 
 def shutdown_all():
     """
     Shutdown all EC2 instances in all clusters, and remove all
     clusters from the `clusters` shelf.
     """
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     if len(clusters) == 0:
         print "No clusters to shut down.  Exiting."
+        clusters.close()
         sys.exit()
     for cluster_name in clusters:
         shutdown(cluster_name)
@@ -157,8 +165,8 @@ def login(cluster_name, instance_index):
 def kill(cluster_name, instance_index):
     """
     Shutdown instance `instance_index` in cluster `cluster_name`, and
-    remove from the `clusters` shelf.  If we're killing off the last
-    machine in the cluster then it runs `shutdown(cluster_name)`
+    remove from the clusters shelf.  If we're killing off the last
+    instance in the cluster then it runs `shutdown(cluster_name)`
     instead.
     """
     cluster = get_cluster(cluster_name)
@@ -171,6 +179,7 @@ def kill(cluster_name, instance_index):
            (instance_index, cluster_name))
     ec2_conn.terminate_instances([instance.id])
     del cluster.instances[instance_index]
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     clusters[cluster_name] = cluster
     clusters.close()
 
@@ -187,6 +196,7 @@ def add(cluster_name, n):
     instances = create_ec2_instances(n, cluster.instance_type)
     # Update clusters
     cluster.add(instances)
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     clusters[cluster_name] = cluster
     clusters.close()
 
@@ -263,10 +273,14 @@ def get_cluster(cluster_name):
     Check that a cluster with name `cluster_name` exists, and return
     the corresponding Cluster object if so.
     """
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     if cluster_name not in clusters:
         print "No cluster with the name %s exists.  Exiting." % cluster_name
+        clusters.close()
         sys.exit()
-    return clusters[cluster_name]
+    cluster = clusters[cluster_name]
+    clusters.close()
+    return cluster
 
 def get_instance(cluster, instance_index):
     """
@@ -287,7 +301,10 @@ def exists(cluster_name):
     Return ``True`` if an EC2 cluster with name ``cluster_name`` exists, and
     ``False`` otherwise.
     """
-    return (cluster_name in clusters)
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
+    value = cluster_name in clusters
+    clusters.close()
+    return value
 
 def public_dns_names(cluster_name):
     """
@@ -296,9 +313,12 @@ def public_dns_names(cluster_name):
     See README.md to see how this enables easy integration with
     Fabric.
     """
+    clusters = shelve.open("%s/.ec2-shelf" % HOME, writeback=True)
     if cluster_name not in clusters:
-        print ("Cluster name %s not recognized.  Exiting ec2.public_dns_names()." %
+        print (
+            "Cluster name %s not recognized.  Exiting ec2.public_dns_names()." %
                cluster_name)
+        clusters.close()
         sys.exit()
     else:
         cluster = clusters[cluster_name]
