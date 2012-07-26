@@ -120,7 +120,7 @@ def show_all():
     print "Showing all clusters."
     for cluster_name in clusters:
         show(cluster_name)
-    clusters.closer()
+    clusters.close()
 
 def shutdown(cluster_name):
     """
