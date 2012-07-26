@@ -265,7 +265,6 @@ def create_ec2_instances(n, instance_type):
     for instance in reservation.instances:  # Wait for the cluster to come up
         while instance.update()== u'pending':
             time.sleep(1)
-    time.sleep(120) # Give the ssh daemon time to start
     return reservation.instances
 
 def get_cluster(cluster_name):
