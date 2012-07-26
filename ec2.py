@@ -171,7 +171,7 @@ def kill(cluster_name, instance_index):
     """
     cluster = get_cluster(cluster_name)
     instance = get_instance(cluster, instance_index)
-    if len(cluster.instances)==1:
+    if size(cluster_name)==1:
         print "Last machine in cluster, shutting down entire cluster."
         shutdown(cluster_name)
         sys.exit()
@@ -222,7 +222,7 @@ def ssh_all(cluster_name, cmd):
     Run `cmd` on all instances in `cluster_name`.
     """
     cluster = get_cluster(cluster_name)
-    for j in range(len(cluster.instances)):
+    for j in range(size(cluster_name)):
         ssh(cluster_name, j, cmd)
 
 def scp(cluster_name, instance_index, local_filename, remote_filename=False):
@@ -245,8 +245,7 @@ def scp_all(cluster_name, local_filename, remote_filename=False):
     """
     Run `scp` on all instances in `cluster_name`.
     """
-    cluster = get_cluster(cluster_name)
-    for j in range(len(cluster.instances)):
+    for j in range(size(cluster_name)):
         scp(cluster_name, j, local_filename, remote_filename)
 
 #### Helper functions
@@ -283,8 +282,9 @@ def get_cluster(cluster_name):
 
 def get_instance(cluster, instance_index):
     """
-    Check that `cluster` has an instance with index `instance_index`,
-    and if so return the corresponding ec2_classes.Instance object.
+    Check that ``cluster`` has an instance with index
+    ``instance_index``, and if so return the corresponding
+    ``ec2_classes.Instance object``.
     """
     try:
         return cluster.instances[instance_index]
@@ -328,7 +328,7 @@ def size(cluster_name):
     """
     Return the size of the cluster with name ``cluster_name``.
     """
-    return len(get_cluster(cluster_name))
+    return len(get_cluster(cluster_name).instances)
 
 #### External interface
 
