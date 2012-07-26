@@ -263,7 +263,7 @@ def get_cluster(cluster_name):
     Check that a cluster with name `cluster_name` exists, and return
     the corresponding Cluster object if so.
     """
-    if cluter_name not in clusters:
+    if cluster_name not in clusters:
         print "No cluster with the name %s exists.  Exiting." % cluster_name
         sys.exit()
     return clusters[cluster_name]
