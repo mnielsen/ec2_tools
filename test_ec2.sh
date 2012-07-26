@@ -72,3 +72,5 @@ echo "Output below should be blank if test passes"
 ec2-describe-instances | grep running
 
 echo -e "\nNot tested: show, shutdown, login, ssh, ssh_all, scp, scp_all."
+echo "Also not tested were externally exported functions exists(),"
+echo "public_dns_names(), and size()."
